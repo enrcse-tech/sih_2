@@ -173,7 +173,7 @@ export default function PropertyDetails() {
               width: '100%',
               display: 'flex',
               alignItems: 'center',
-              justify: 'center',
+              justifyContent: 'center',
               gap: 6,
               background: 'rgba(16, 185, 129, 0.15)',
               borderColor: 'var(--accent-emerald)',

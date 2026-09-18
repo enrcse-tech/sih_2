@@ -6,7 +6,7 @@
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Text, Line, Grid, Edges, Environment } from '@react-three/drei';
-import { MapPin, ExternalLink, Satellite, Map as MapIcon, X, Maximize2, Play, Pause, SkipForward, SkipBack, Video, Compass, Box } from 'lucide-react';
+import { MapPin, ExternalLink, Satellite, Map as MapIcon, X, Play, Pause, SkipForward, Video, Box } from 'lucide-react';
 import * as THREE from 'three';
 import { useAppContext } from '../context/AppContext';
 import { getFloorColor, getPropertyTypeColor } from '../services/buildingGenerator';

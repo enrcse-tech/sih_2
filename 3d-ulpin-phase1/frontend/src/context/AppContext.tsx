@@ -4,7 +4,7 @@
 // ============================================================================
 
 import React, { createContext, useContext, useReducer, useEffect, useMemo } from 'react';
-import type { AppState, AppAction, LayerVisibility, Building, Floor, Property, ActivityLogEntry } from '../types';
+import type { AppState, AppAction, LayerVisibility, Property, ActivityLogEntry } from '../types';
 import { sampleLPUData } from '../data/sampleLPU';
 import { generateAllFloors } from '../services/buildingGenerator';
 
@@ -32,6 +32,7 @@ const initialState: AppState = {
   basemap: 'satellite',
   modelMode: 'architectural',
   timeOfDay: 'day',
+  viewMode: 'map',
   selectedBuilding: null,
   selectedFloor: null,
   selectedProperty: null,
@@ -101,6 +102,17 @@ function appReducer(state: AppState, action: AppAction): AppState {
         timeOfDay: action.time,
         activityLog: [
           newLogEntry('Environment', `Lighting switched to ${action.time.toUpperCase()} mode`),
+          ...state.activityLog,
+        ].slice(0, 50),
+      };
+    }
+
+    case 'SET_VIEW_MODE': {
+      return {
+        ...state,
+        viewMode: action.mode,
+        activityLog: [
+          newLogEntry('View', `Switched to ${action.mode === 'map' ? 'Map View' : '3D Interior View'}`),
           ...state.activityLog,
         ].slice(0, 50),
       };

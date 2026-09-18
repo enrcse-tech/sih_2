@@ -46,6 +46,10 @@ export interface Building {
   basementFloors: number;
   /** Hex color for rendering */
   color: string;
+  /** GPS latitude (optional — for real-world map placement) */
+  latitude?: number;
+  /** GPS longitude (optional — for real-world map placement) */
+  longitude?: number;
 }
 
 /** A single floor within a building — Z ranges are ALWAYS computed */
@@ -187,6 +191,12 @@ export interface ValidationResult {
 }
 
 // ---------------------------------------------------------------------------
+// VIEW MODE — Map vs 3D Interior
+// ---------------------------------------------------------------------------
+
+export type ViewMode = 'map' | '3d-interior';
+
+// ---------------------------------------------------------------------------
 // APP STATE
 // ---------------------------------------------------------------------------
 
@@ -197,6 +207,7 @@ export interface AppState {
   basemap: 'satellite' | 'streets' | 'dark';
   modelMode: 'architectural' | 'cadastral';
   timeOfDay: 'day' | 'sunset' | 'night';
+  viewMode: ViewMode;
   selectedBuilding: Building | null;
   selectedFloor: Floor | null;
   selectedProperty: Property | null;
@@ -210,6 +221,7 @@ export type AppAction =
   | { type: 'SET_BASEMAP'; basemap: 'satellite' | 'streets' | 'dark' }
   | { type: 'SET_MODEL_MODE'; mode: 'architectural' | 'cadastral' }
   | { type: 'SET_TIME_OF_DAY'; time: 'day' | 'sunset' | 'night' }
+  | { type: 'SET_VIEW_MODE'; mode: ViewMode }
   | { type: 'SELECT_BUILDING'; building: Building | null }
   | { type: 'SELECT_FLOOR'; floor: Floor | null }
   | { type: 'SELECT_PROPERTY'; property: Property | null }

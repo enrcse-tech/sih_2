@@ -14,7 +14,7 @@ export default function BottomPanel() {
   const [activeTab, setActiveTab] = useState<Tab>('parcels');
   const [expanded, setExpanded] = useState(false);
   const [mapType, setMapType] = useState<'k' | 'm'>('k'); // k = satellite, m = roadmap
-  const { state, currentFloorProperties } = useAppContext();
+  const { state, dispatch, currentFloorProperties } = useAppContext();
   const { siteData, floors, selectedFloor, selectedBuilding, activityLog } = state;
 
   // Compute validation summary

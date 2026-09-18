@@ -4,7 +4,7 @@
 // ============================================================================
 
 import { useState, useRef, useEffect } from 'react';
-import { Search, MapPin, Box, Layers, Building2 } from 'lucide-react';
+import { Search, MapPin, Box, Layers, Building2, Map as MapIcon, Globe2 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 
 export default function TopBar() {
@@ -128,6 +128,15 @@ export default function TopBar() {
             : `31.2536° N, 75.7037° E ↗`
           }
         </a>
+
+        <button
+          className={`topbar-view-toggle ${state.viewMode === 'map' ? 'map-active' : 'interior-active'}`}
+          onClick={() => dispatch({ type: 'SET_VIEW_MODE', mode: state.viewMode === 'map' ? '3d-interior' : 'map' })}
+          title={state.viewMode === 'map' ? 'Switch to 3D Interior View' : 'Switch to Map View'}
+        >
+          {state.viewMode === 'map' ? <Globe2 size={13} /> : <MapIcon size={13} />}
+          <span>{state.viewMode === 'map' ? 'Map View' : '3D Interior'}</span>
+        </button>
 
         <div className="topbar-status">
           <div className="topbar-status-dot" />
