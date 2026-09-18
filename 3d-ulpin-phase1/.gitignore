@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build
+dist/
+build/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large 3D model files (exceed GitHub 100MB limit)
+*.obj
+*.fbx
+*.glb
+*.gltf
+*.3dm
+*.rar
+*.zip
+*.stl
+*.dae
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
