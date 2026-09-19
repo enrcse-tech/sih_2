@@ -263,18 +263,7 @@ export default function MapView() {
               ],
               'fill-extrusion-height': ['get', 'height'],
               'fill-extrusion-base': 0,
-              'fill-extrusion-opacity': [
-                'case',
-                ['==', ['get', 'buildingId'], state.selectedBuilding?.id ?? ''],
-                0.9,
-                hoveredBuilding
-                  ? ['case',
-                      ['==', ['get', 'buildingId'], hoveredBuilding.buildingId],
-                      0.85,
-                      0.7,
-                    ]
-                  : 0.7,
-              ],
+              'fill-extrusion-opacity': 0.85,
             }}
           />
 

@@ -217,7 +217,7 @@ function ParcelMesh({ parcel }: { parcel: Parcel }) {
       {/* Outline */}
       <Line
         points={[...parcel.footprint.map(([x, y]) => [x, 0.5, -y] as [number, number, number]),
-                 [parcel.footprint[0][0], 0.5, -parcel.footprint[0][1]]]}
+        [parcel.footprint[0][0], 0.5, -parcel.footprint[0][1]]]}
         color={parcel.color}
         lineWidth={2}
         opacity={0.6}
@@ -251,9 +251,9 @@ function EmptyParcelMesh({ parcel, onClick }: { parcel: Parcel; onClick: () => v
   const glowRef = useRef<THREE.Mesh>(null);
 
   // Pulsing glow animation
-  useFrame(({ clock }) => {
+  useFrame((state) => {
     if (glowRef.current) {
-      const t = Math.sin(clock.elapsedTime * 2) * 0.5 + 0.5;
+      const t = Math.sin(state.clock.getElapsedTime() * 2) * 0.5 + 0.5;
       (glowRef.current.material as THREE.MeshStandardMaterial).opacity = 0.08 + t * 0.12;
     }
   });
@@ -287,7 +287,7 @@ function EmptyParcelMesh({ parcel, onClick }: { parcel: Parcel; onClick: () => v
       {/* Dashed outline */}
       <Line
         points={[...parcel.footprint.map(([x, y]) => [x, 0.6, -y] as [number, number, number]),
-                 [parcel.footprint[0][0], 0.6, -parcel.footprint[0][1]]]}
+        [parcel.footprint[0][0], 0.6, -parcel.footprint[0][1]]]}
         color={parcel.color}
         lineWidth={3}
         opacity={0.9}
