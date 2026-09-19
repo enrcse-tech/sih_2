@@ -41,7 +41,7 @@ export default function TopBar() {
       </div>
 
       {/* Global Search Bar */}
-      <div ref={searchRef} style={{ position: 'relative' }}>
+      <div ref={searchRef} style={{ position: 'relative', flexShrink: 1, minWidth: 180 }}>
         <div className="topbar-search">
           <Search size={15} style={{ color: 'var(--accent-cyan)', flexShrink: 0 }} />
           <input
