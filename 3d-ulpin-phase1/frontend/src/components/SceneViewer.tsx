@@ -1491,7 +1491,7 @@ export default function SceneViewer() {
         camera={{ position: [140, 90, 140], fov: 50, near: 0.1, far: 2000 }}
         gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
         onCreated={({ gl }) => {
-          gl.setClearColor('#0a0e17');
+          gl.setClearColor('#080b13');
           gl.toneMapping = THREE.ACESFilmicToneMapping;
           gl.toneMappingExposure = 1.2;
         }}
