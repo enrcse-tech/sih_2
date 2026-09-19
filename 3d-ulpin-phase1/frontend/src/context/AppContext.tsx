@@ -37,6 +37,8 @@ const initialState: AppState = {
   selectedFloor: null,
   selectedProperty: null,
   selectedParcel: null,
+  selectedUtility: null,
+  undergroundXRay: true,
   showRegistrationModal: false,
   activityLog: [
     {
@@ -216,6 +218,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
         selectedBuilding: null,
         selectedFloor: null,
         selectedProperty: null,
+        selectedParcel: null,
+        selectedUtility: null,
         activityLog: [
           newLogEntry('Selection', 'All selections cleared'),
           ...state.activityLog,
@@ -226,12 +230,38 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         selectedParcel: action.parcel,
+        selectedUtility: null,
         activityLog: action.parcel
           ? [
               newLogEntry('Selection', `Selected parcel ${action.parcel.id} (${action.parcel.name})`),
               ...state.activityLog,
             ].slice(0, 50)
           : state.activityLog,
+      };
+    }
+
+    case 'SELECT_UTILITY': {
+      return {
+        ...state,
+        selectedUtility: action.utility,
+        activityLog: action.utility
+          ? [
+              newLogEntry('Utility', `Inspecting ${action.utility.type.toUpperCase()} line ${action.utility.id}: ${action.utility.description}`),
+              ...state.activityLog,
+            ].slice(0, 50)
+          : state.activityLog,
+      };
+    }
+
+    case 'TOGGLE_UNDERGROUND_XRAY': {
+      const nextXRay = !state.undergroundXRay;
+      return {
+        ...state,
+        undergroundXRay: nextXRay,
+        activityLog: [
+          newLogEntry('Display', `Subterranean X-Ray View ${nextXRay ? 'Enabled' : 'Disabled'}`),
+          ...state.activityLog,
+        ].slice(0, 50),
       };
     }
 

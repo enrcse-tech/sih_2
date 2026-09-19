@@ -182,29 +182,76 @@ export default function LayerControl() {
           Layers
         </div>
         {layers.map((layer) => (
-          <div
-            key={layer.key}
-            className="layer-toggle"
-            onClick={() => {
-              if (!layer.phase2) {
-                dispatch({ type: 'TOGGLE_LAYER', layer: layer.key });
-              }
-            }}
-            title={layer.phase2 ? 'Available in Phase 2' : `Toggle ${layer.label}`}
-          >
-            <div className={`layer-toggle-label ${layer.phase2 ? 'disabled' : ''}`}>
-              {layer.icon}
-              <span>{layer.label}</span>
-              {layer.phase2 && (
-                <span style={{ fontSize: 9, color: 'var(--accent-amber)', fontWeight: 600 }}>P2</span>
-              )}
-            </div>
+          <div key={layer.key} className="layer-item-container">
             <div
-              className={`toggle-switch ${state.layers[layer.key] ? 'active' : ''} ${
-                layer.phase2 ? 'disabled' : ''
-              }`}
-              style={layer.phase2 ? { opacity: 0.3 } : {}}
-            />
+              className="layer-toggle"
+              onClick={() => {
+                if (!layer.phase2) {
+                  dispatch({ type: 'TOGGLE_LAYER', layer: layer.key });
+                }
+              }}
+              title={layer.phase2 ? 'Available in Phase 2' : `Toggle ${layer.label}`}
+            >
+              <div className={`layer-toggle-label ${layer.phase2 ? 'disabled' : ''}`}>
+                {layer.icon}
+                <span>{layer.label}</span>
+                {layer.phase2 && (
+                  <span style={{ fontSize: 9, color: 'var(--accent-amber)', fontWeight: 600 }}>P2</span>
+                )}
+              </div>
+              <div
+                className={`toggle-switch ${state.layers[layer.key] ? 'active' : ''} ${
+                  layer.phase2 ? 'disabled' : ''
+                }`}
+                style={layer.phase2 ? { opacity: 0.3 } : {}}
+              />
+            </div>
+            {layer.key === 'undergroundUtilities' && state.layers.undergroundUtilities && (
+              <div
+                className="underground-subpanel animate-fade-in"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* X-Ray Ground Toggle */}
+                <div
+                  className="underground-xray-toggle"
+                  onClick={() => dispatch({ type: 'TOGGLE_UNDERGROUND_XRAY' })}
+                  title="Toggle Subterranean Transparent Ground"
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--text-main)' }}>
+                    <Eye size={12} style={{ color: state.undergroundXRay ? 'var(--accent-cyan)' : 'var(--text-muted)' }} />
+                    Subsurface X-Ray Ground
+                  </span>
+                  <span className={`badge ${state.undergroundXRay ? 'badge-active' : ''}`} style={{ fontSize: 9, padding: '1px 6px' }}>
+                    {state.undergroundXRay ? 'ON' : 'OFF'}
+                  </span>
+                </div>
+
+                {/* Subterranean Network Legend */}
+                <div className="utility-legend-list">
+                  <div className="utility-legend-item">
+                    <span className="utility-legend-dot" style={{ background: '#0284c7', boxShadow: '0 0 6px #38bdf8' }} />
+                    <div className="utility-legend-info">
+                      <span className="utility-legend-title" style={{ color: '#38bdf8' }}>💧 Water Supply</span>
+                      <span className="utility-legend-desc">Pressurized Mains (2.2m)</span>
+                    </div>
+                  </div>
+                  <div className="utility-legend-item">
+                    <span className="utility-legend-dot" style={{ background: '#ea580c', boxShadow: '0 0 6px #f97316' }} />
+                    <div className="utility-legend-info">
+                      <span className="utility-legend-title" style={{ color: '#fb923c' }}>☣️ Sewage System</span>
+                      <span className="utility-legend-desc">Gravity to STP (3.8m)</span>
+                    </div>
+                  </div>
+                  <div className="utility-legend-item">
+                    <span className="utility-legend-dot" style={{ background: '#ef4444', boxShadow: '0 0 6px #f87171' }} />
+                    <div className="utility-legend-info">
+                      <span className="utility-legend-title" style={{ color: '#f87171' }}>⚡ 11kV Power Grid</span>
+                      <span className="utility-legend-desc">Armored Ducts (1.8m)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

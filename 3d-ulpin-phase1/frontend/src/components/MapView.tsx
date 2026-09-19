@@ -10,8 +10,16 @@ import { Building2, Eye, EyeOff, Compass, Globe2, ArrowRight } from 'lucide-reac
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 import { useAppContext } from '../context/AppContext';
-import { buildingFootprints, parcelBoundaries, emptyParcelBoundaries, LPU_CENTER, DEFAULT_ZOOM } from '../data/buildingGeoJSON';
-import type { BuildingGeoProperties, EmptyParcelGeoProperties } from '../data/buildingGeoJSON';
+import {
+  buildingFootprints,
+  parcelBoundaries,
+  emptyParcelBoundaries,
+  waterNetworkGeoJSON,
+  sewageNetworkGeoJSON,
+  LPU_CENTER,
+  DEFAULT_ZOOM,
+} from '../data/buildingGeoJSON';
+import type { BuildingGeoProperties, EmptyParcelGeoProperties, UtilityGeoProperties } from '../data/buildingGeoJSON';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -42,6 +50,11 @@ export default function MapView() {
     lng: number;
     lat: number;
     parcel: EmptyParcelGeoProperties;
+  } | null>(null);
+  const [utilityPopup, setUtilityPopup] = useState<{
+    lng: number;
+    lat: number;
+    utility: UtilityGeoProperties;
   } | null>(null);
   const [showParcels, setShowParcels] = useState(true);
   const [mapStyle, setMapStyle] = useState<keyof typeof MAP_STYLES>('satellite');
@@ -165,12 +178,27 @@ export default function MapView() {
         }}
         style={{ width: '100%', height: '100%' }}
         mapStyle={MAP_STYLES[mapStyle]}
-        interactiveLayerIds={['buildings-3d', 'buildings-outline', 'empty-parcels-fill']}
+        interactiveLayerIds={['buildings-3d', 'buildings-outline', 'empty-parcels-fill', 'water-network-line', 'sewage-network-line']}
         onClick={(e: MapMouseEvent) => {
-          // Check if clicked on an empty parcel
           if (e.features && e.features.length > 0) {
             const feature = e.features[0];
             const layerId = feature.layer?.id;
+
+            // Check if clicked on an underground utility pipeline
+            if (layerId === 'water-network-line' || layerId === 'sewage-network-line') {
+              const props = feature.properties as unknown as UtilityGeoProperties;
+              setUtilityPopup({ lng: e.lngLat.lng, lat: e.lngLat.lat, utility: props });
+              setPopupInfo(null);
+              setVacantPopup(null);
+              dispatch({
+                type: 'LOG_ACTIVITY',
+                action: 'Map',
+                detail: `Inspecting ${props.type.toUpperCase()} line ${props.id} (${props.name})`,
+              });
+              return;
+            }
+
+            // Check if clicked on an empty parcel
             if (layerId === 'empty-parcels-fill') {
               const props = feature.properties as unknown as EmptyParcelGeoProperties;
               const coords = (feature.geometry as GeoJSON.Polygon).coordinates[0];
@@ -178,11 +206,13 @@ export default function MapView() {
               const latAvg = coords.reduce((sum, c) => sum + c[1], 0) / coords.length;
               setVacantPopup({ lng: lngAvg, lat: latAvg, parcel: props });
               setPopupInfo(null);
+              setUtilityPopup(null);
               mapRef.current?.flyTo({ center: [lngAvg, latAvg], zoom: 17.5, pitch: 45, duration: 1200 });
               dispatch({ type: 'LOG_ACTIVITY', action: 'Map', detail: `Clicked vacant parcel ${props.id} (${props.name})` });
               return;
             }
           }
+          setUtilityPopup(null);
           onBuildingClick(e);
         }}
         onMouseMove={onBuildingHover}
@@ -344,6 +374,90 @@ export default function MapView() {
           />
         </Source>
 
+        {/* Underground Utilities: Water Supply & Sewage System */}
+        {state.layers.undergroundUtilities && (
+          <>
+            {/* Water Supply Network (Cyan) */}
+            <Source id="water-network" type="geojson" data={waterNetworkGeoJSON}>
+              <Layer
+                id="water-network-glow"
+                type="line"
+                paint={{
+                  'line-color': '#38bdf8',
+                  'line-width': 13,
+                  'line-opacity': 0.45,
+                  'line-blur': 4,
+                }}
+              />
+              <Layer
+                id="water-network-line"
+                type="line"
+                paint={{
+                  'line-color': '#0284c7',
+                  'line-width': 6.5,
+                  'line-opacity': 0.98,
+                }}
+              />
+              <Layer
+                id="water-network-label"
+                type="symbol"
+                layout={{
+                  'text-field': ['concat', '💧 ', ['get', 'name']],
+                  'text-size': 11.5,
+                  'symbol-placement': 'line',
+                  'text-offset': [0, 1],
+                  'text-anchor': 'bottom',
+                }}
+                paint={{
+                  'text-color': '#38bdf8',
+                  'text-halo-color': '#0a0f1a',
+                  'text-halo-width': 2,
+                }}
+              />
+            </Source>
+
+            {/* Sewage System Network (Terracotta/Orange) */}
+            <Source id="sewage-network" type="geojson" data={sewageNetworkGeoJSON}>
+              <Layer
+                id="sewage-network-glow"
+                type="line"
+                paint={{
+                  'line-color': '#f97316',
+                  'line-width': 15,
+                  'line-opacity': 0.4,
+                  'line-blur': 4,
+                }}
+              />
+              <Layer
+                id="sewage-network-line"
+                type="line"
+                paint={{
+                  'line-color': '#ea580c',
+                  'line-width': 7.5,
+                  'line-dasharray': [4, 2],
+                  'line-opacity': 0.98,
+                }}
+              />
+              <Layer
+                id="sewage-network-label"
+                type="symbol"
+                layout={{
+                  'text-field': ['concat', '☣️ ', ['get', 'name']],
+                  'text-size': 10.5,
+                  'symbol-placement': 'line',
+                  'text-offset': [0, 1],
+                  'text-anchor': 'bottom',
+                }}
+                paint={{
+                  'text-color': '#fb923c',
+                  'text-halo-color': '#0a0f1a',
+                  'text-halo-width': 2,
+                }}
+              />
+            </Source>
+          </>
+        )}
+
         {/* Building Info Popup */}
         {popupInfo && (
           <Popup
@@ -438,6 +552,42 @@ export default function MapView() {
               >
                 🏗️ Register New Building
               </button>
+            </div>
+          </Popup>
+        )}
+
+        {/* Utility Pipeline Popup */}
+        {utilityPopup && (
+          <Popup
+            longitude={utilityPopup.lng}
+            latitude={utilityPopup.lat}
+            anchor="bottom"
+            closeOnClick={false}
+            onClose={() => setUtilityPopup(null)}
+            className="building-popup"
+            maxWidth="320px"
+          >
+            <div className="popup-content">
+              <div className="popup-header" style={{ borderLeft: `4px solid ${utilityPopup.utility.color}` }}>
+                <span style={{ fontSize: 16 }}>{utilityPopup.utility.type === 'water' ? '💧' : '☣️'}</span>
+                <span className="popup-building-name">{utilityPopup.utility.name}</span>
+              </div>
+              <div className="popup-stats">
+                <div className="popup-stat">
+                  <span className="popup-stat-value">-{utilityPopup.utility.depth}m</span>
+                  <span className="popup-stat-label">Depth</span>
+                </div>
+                <div className="popup-stat">
+                  <span className="popup-stat-value">{Math.round(utilityPopup.utility.diameter * 1000)}mm</span>
+                  <span className="popup-stat-label">Diameter</span>
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: '#94a3b8', margin: '6px 0 2px' }}>
+                <strong style={{ color: '#cbd5e1' }}>Gradient / Flow:</strong> {utilityPopup.utility.flowRateOrSlope}
+              </div>
+              <div style={{ fontSize: 11, color: '#94a3b8', margin: '2px 0 4px' }}>
+                <strong style={{ color: '#cbd5e1' }}>Connected:</strong> {utilityPopup.utility.connectedBuildings}
+              </div>
             </div>
           </Popup>
         )}

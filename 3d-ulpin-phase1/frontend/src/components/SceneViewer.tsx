@@ -162,6 +162,10 @@ function GroundPlane() {
           map={texture || undefined}
           roughness={0.8}
           metalness={0.2}
+          transparent={Boolean(state.layers.undergroundUtilities && state.undergroundXRay)}
+          opacity={state.layers.undergroundUtilities && state.undergroundXRay ? 0.35 : 1.0}
+          depthWrite={!(state.layers.undergroundUtilities && state.undergroundXRay)}
+          side={THREE.DoubleSide}
         />
       </mesh>
       {/* Sleek Minimal Compass Markers */}
@@ -193,6 +197,8 @@ function GroundPlane() {
 // ---------------------------------------------------------------------------
 
 function ParcelMesh({ parcel }: { parcel: Parcel }) {
+  const { state } = useAppContext();
+  const isUndergroundActive = state.layers.undergroundUtilities;
   const shape = useMemo(() => {
     const s = new THREE.Shape();
     parcel.footprint.forEach(([x, y], i) => {
@@ -205,13 +211,14 @@ function ParcelMesh({ parcel }: { parcel: Parcel }) {
 
   return (
     <group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.1, 0]}>
-        <extrudeGeometry args={[shape, { depth: 0.3, bevelEnabled: false }]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.08, 0]}>
+        <extrudeGeometry args={[shape, { depth: 0.2, bevelEnabled: false }]} />
         <meshStandardMaterial
           color={parcel.color}
           transparent
-          opacity={0.15}
+          opacity={isUndergroundActive ? 0.08 : 0.16}
           side={THREE.DoubleSide}
+          depthWrite={false}
         />
       </mesh>
       {/* Outline */}
@@ -274,13 +281,14 @@ function EmptyParcelMesh({ parcel, onClick }: { parcel: Parcel; onClick: () => v
   return (
     <group>
       {/* Pulsing fill */}
-      <mesh ref={glowRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.15, 0]}>
-        <extrudeGeometry args={[shape, { depth: 0.2, bevelEnabled: false }]} />
+      <mesh ref={glowRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.12, 0]}>
+        <extrudeGeometry args={[shape, { depth: 0.18, bevelEnabled: false }]} />
         <meshStandardMaterial
           color={parcel.color}
           transparent
-          opacity={0.15}
+          opacity={0.12}
           side={THREE.DoubleSide}
+          depthWrite={false}
         />
       </mesh>
 
@@ -1083,37 +1091,227 @@ function PropertyVolume({ property, building, isSelected, isHovered, onSelect, o
 }
 
 // ---------------------------------------------------------------------------
-// UNDERGROUND UTILITY PIPE
+// UNDERGROUND UTILITY PIPE (WATER SUPPLY & SEWAGE NETWORKS DEEP UNDER PARCELS)
 // ---------------------------------------------------------------------------
 
+function UtilityFlowPulses({ curve, isWater, radius }: { curve: THREE.CatmullRomCurve3; isWater: boolean; radius: number }) {
+  const groupRef = useRef<THREE.Group>(null);
+  const beadCount = 5;
+  const beadRefs = useRef<(THREE.Mesh | null)[]>([]);
+
+  useFrame(({ clock }) => {
+    const time = clock.getElapsedTime();
+    const speed = isWater ? 0.18 : 0.09;
+    for (let i = 0; i < beadCount; i++) {
+      const mesh = beadRefs.current[i];
+      if (!mesh) continue;
+      const t = (time * speed + i / beadCount) % 1.0;
+      const point = curve.getPointAt(t);
+      mesh.position.copy(point);
+    }
+  });
+
+  return (
+    <group ref={groupRef}>
+      {Array.from({ length: beadCount }).map((_, i) => (
+        <mesh
+          key={i}
+          ref={(el) => { beadRefs.current[i] = el; }}
+        >
+          <sphereGeometry args={[radius * 0.78, 16, 16]} />
+          <meshBasicMaterial
+            color={isWater ? '#38bdf8' : '#fb923c'}
+            transparent
+            opacity={0.9}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
 function UtilityPipe({ utility }: { utility: UndergroundUtility }) {
+  const { state, dispatch } = useAppContext();
+  const [hovered, setHovered] = useState(false);
+  const isSelected = state.selectedUtility?.id === utility.id;
+  const isWater = utility.type === 'water';
+  const isSewer = utility.type === 'sewer';
+
+  // Significantly larger pipe radius for massive, prominent subterranean pipeline
+  const pipeRadius = Math.max(0.75, utility.diameter / 2);
+
   const points = useMemo(() => {
-    return utility.path.map(
-      (p) => new THREE.Vector3(p.x, -utility.depth, -p.y)
-    );
+    return utility.path.map((p) => new THREE.Vector3(p.x, -utility.depth, -p.y));
   }, [utility]);
 
-  const curve = useMemo(() => new THREE.CatmullRomCurve3(points, false), [points]);
+  const curve = useMemo(() => new THREE.CatmullRomCurve3(points, false, 'centripetal'), [points]);
+
+  const pipeColor = isWater ? '#0284c7' : isSewer ? '#ea580c' : utility.color || '#ef4444';
+  const glowColor = isWater ? '#38bdf8' : isSewer ? '#f97316' : '#f87171';
 
   return (
     <group>
-      <mesh>
-        <tubeGeometry args={[curve, 64, utility.diameter / 2, 8, false]} />
+      {/* Vertical Depth Reference Pillar from Parcel Surface (y=0) down to Subterranean Pipe */}
+      <Line
+        points={[
+          [points[0].x, 0.2, points[0].z],
+          [points[0].x, -utility.depth, points[0].z],
+        ]}
+        color={glowColor}
+        lineWidth={3}
+        dashed
+        dashSize={1.5}
+        gapSize={1.2}
+        opacity={0.7}
+        transparent
+      />
+
+      {/* Main Underground Pipe Tube — Thick Subterranean Infrastructure */}
+      <mesh
+        onClick={(e) => {
+          e.stopPropagation();
+          dispatch({ type: 'SELECT_UTILITY', utility: isSelected ? null : utility });
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          setHovered(true);
+          document.body.style.cursor = 'pointer';
+        }}
+        onPointerOut={() => {
+          setHovered(false);
+          document.body.style.cursor = 'default';
+        }}
+      >
+        <tubeGeometry args={[curve, 160, pipeRadius, 20, false]} />
         <meshStandardMaterial
-          color={utility.color}
+          color={pipeColor}
+          emissive={glowColor}
+          emissiveIntensity={isSelected ? 1.0 : hovered ? 0.75 : 0.35}
+          roughness={isWater ? 0.2 : 0.5}
+          metalness={isWater ? 0.75 : 0.4}
           transparent
-          opacity={0.6}
+          opacity={0.94}
         />
       </mesh>
-      {/* Label at start */}
+
+      {/* Selected Wireframe Halo */}
+      {isSelected && (
+        <mesh>
+          <tubeGeometry args={[curve, 160, pipeRadius * 1.3, 14, false]} />
+          <meshBasicMaterial
+            color={glowColor}
+            wireframe
+            transparent
+            opacity={0.7}
+          />
+        </mesh>
+      )}
+
+      {/* Animated fluid flow pulses inside the enlarged pipe */}
+      <UtilityFlowPulses curve={curve} isWater={isWater} radius={pipeRadius} />
+
+      {/* Vertical Connection Risers Connecting Underground Pipe to Building Basements/Foundations */}
+      {(utility.risers || []).map((riser, idx) => {
+        const riserH = riser.height || utility.depth;
+        const posY = -utility.depth + riserH / 2;
+        const bldg = state.siteData.buildings.find(b => b.id === riser.buildingId);
+        const riserRadius = pipeRadius * 0.75;
+        return (
+          <group key={`riser-${idx}`} position={[riser.x, posY, -riser.y]}>
+            {/* Vertical cylinder conduit */}
+            <mesh>
+              <cylinderGeometry args={[riserRadius, riserRadius, riserH, 16]} />
+              <meshStandardMaterial
+                color={pipeColor}
+                emissive={glowColor}
+                emissiveIntensity={isSelected ? 0.85 : 0.35}
+                roughness={0.35}
+                metalness={0.65}
+              />
+            </mesh>
+            {/* Intake / Collar Foundation Box at Building Basement Entry */}
+            <mesh position={[0, riserH / 2, 0]}>
+              <boxGeometry args={[pipeRadius * 3.2, 0.8, pipeRadius * 3.2]} />
+              <meshStandardMaterial
+                color={isSelected ? glowColor : '#1e293b'}
+                emissive={isSelected ? glowColor : '#0f172a'}
+                emissiveIntensity={0.6}
+              />
+            </mesh>
+            {/* Inlet badge */}
+            <Text
+              position={[0, riserH / 2 + 1.6, 0]}
+              fontSize={1.4}
+              color={glowColor}
+              anchorX="center"
+              anchorY="bottom"
+              outlineWidth={0.12}
+              outlineColor="#000000"
+            >
+              {isWater ? `💧 ${bldg?.name || riser.buildingId} Intake` : `☣️ ${bldg?.name || riser.buildingId} Outfall`}
+            </Text>
+          </group>
+        );
+      })}
+
+      {/* Inspection Manholes / Subsurface Access Shafts */}
+      {(utility.manholes || []).map((mh, idx) => {
+        const shaftH = utility.depth;
+        const shaftRadius = Math.max(1.1, pipeRadius * 0.9);
+        const rimRadius = Math.max(1.3, pipeRadius * 1.1);
+        return (
+          <group key={`mh-${idx}`} position={[mh.x, 0, -mh.y]}>
+            {/* Subsurface Concrete Shaft */}
+            <mesh position={[0, -shaftH / 2, 0]}>
+              <cylinderGeometry args={[shaftRadius, shaftRadius * 1.05, shaftH, 20]} />
+              <meshStandardMaterial
+                color="#475569"
+                roughness={0.9}
+                transparent
+                opacity={0.6}
+              />
+            </mesh>
+            {/* Ground-level Cast Iron Manhole Rim */}
+            <mesh position={[0, 0.05, 0]}>
+              <cylinderGeometry args={[rimRadius, rimRadius * 1.05, 0.1, 28]} />
+              <meshStandardMaterial
+                color="#1e293b"
+                roughness={0.6}
+                metalness={0.8}
+              />
+            </mesh>
+            {/* Surface Color Identifier Ring */}
+            <mesh position={[0, 0.11, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[shaftRadius * 0.5, shaftRadius * 0.85, 28]} />
+              <meshBasicMaterial color={pipeColor} />
+            </mesh>
+            {/* Manhole Surface Tag */}
+            <Text
+              position={[0, 1.2, 0]}
+              fontSize={1.2}
+              color={pipeColor}
+              anchorX="center"
+              anchorY="bottom"
+              outlineWidth={0.1}
+              outlineColor="#000000"
+            >
+              {mh.label}
+            </Text>
+          </group>
+        );
+      })}
+
+      {/* Subterranean Pipeline Header Label — Positioned deep underground under parcel */}
       <Text
-        position={[points[0].x, points[0].y + 1.5, points[0].z]}
-        fontSize={1.5}
-        color={utility.color}
+        position={[points[0].x, -utility.depth + pipeRadius + 1.4, points[0].z]}
+        fontSize={2.4}
+        color={glowColor}
         anchorX="center"
         anchorY="bottom"
+        outlineWidth={0.16}
+        outlineColor="#000000"
       >
-        {utility.type.toUpperCase()} — {utility.depth}m depth
+        {isWater ? '💧 SUBTERRANEAN WATER MAIN' : isSewer ? '☣️ UNDERGROUND SEWAGE TRUNK' : '⚡ POWER CONDUIT'} (-{utility.depth}m DEEP)
       </Text>
     </group>
   );
@@ -1240,13 +1438,23 @@ function CameraController({ isWalkthrough, isPaused, walkthroughTarget }: {
       }
     };
 
+    const handleFlyToSubterranean = () => {
+      camera.position.set(110, -22, 110);
+      if (controlsRef.current) {
+        controlsRef.current.target.set(0, -7.5, 0);
+        controlsRef.current.update();
+      }
+    };
+
     window.addEventListener('reset-camera', handleReset);
     window.addEventListener('fly-to-property', handleFlyTo);
     window.addEventListener('fly-to-building', handleFlyToBuilding);
+    window.addEventListener('fly-to-subterranean', handleFlyToSubterranean);
     return () => {
       window.removeEventListener('reset-camera', handleReset);
       window.removeEventListener('fly-to-property', handleFlyTo);
       window.removeEventListener('fly-to-building', handleFlyToBuilding);
+      window.removeEventListener('fly-to-subterranean', handleFlyToSubterranean);
     };
   }, [camera]);
 
@@ -1255,12 +1463,13 @@ function CameraController({ isWalkthrough, isPaused, walkthroughTarget }: {
       ref={controlsRef}
       enableDamping
       dampingFactor={0.06}
-      rotateSpeed={0.8}
+      rotateSpeed={0.85}
       zoomSpeed={1.0}
-      minDistance={5}
-      maxDistance={450}
-      maxPolarAngle={Math.PI / 2.05}
-      target={[0, 10, 0]}
+      minDistance={2}
+      maxDistance={600}
+      minPolarAngle={0.02}
+      maxPolarAngle={Math.PI * 0.98}
+      target={[0, 5, 0]}
     />
   );
 }
@@ -1621,6 +1830,19 @@ export default function SceneViewer() {
         <span>{showPipMap ? 'Hide Map PIP' : '🗺️ Google Map PIP'}</span>
       </button>
 
+      {/* Quick 360° Underground Camera View Button */}
+      {state.layers.undergroundUtilities && (
+        <button
+          className="underground-cam-btn animate-fade-in"
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('fly-to-subterranean'));
+          }}
+          title="Rotate camera to downside to see subterranean pipelines directly from underneath (360° view)"
+        >
+          <span>👁️ 360° Under-View</span>
+        </button>
+      )}
+
       {/* Floating PIP Google Map Window */}
       {showPipMap && (
         <div className="pip-map-window animate-fade-in">
@@ -1664,6 +1886,90 @@ export default function SceneViewer() {
             >
               Google Maps <ExternalLink size={10} />
             </a>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Underground Utility Inspector HUD Card */}
+      {state.selectedUtility && (
+        <div className="utility-inspector-hud animate-fade-in">
+          <div className="utility-hud-header" style={{ borderLeft: `4px solid ${state.selectedUtility.color}` }}>
+            <div className="utility-hud-title">
+              <span
+                className="utility-dot"
+                style={{ background: state.selectedUtility.color, boxShadow: `0 0 10px ${state.selectedUtility.color}` }}
+              />
+              <span>
+                {state.selectedUtility.type === 'water'
+                  ? '💧 Potable Water Distribution Network'
+                  : state.selectedUtility.type === 'sewer'
+                  ? '☣️ Sanitary Sewage System (STP)'
+                  : '⚡ Subsurface Infrastructure'}
+              </span>
+            </div>
+            <button
+              className="utility-close-btn"
+              onClick={() => dispatch({ type: 'SELECT_UTILITY', utility: null })}
+              title="Close Inspector"
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          <div className="utility-hud-body">
+            <div className="utility-hud-row">
+              <span className="utility-label">Line ID:</span>
+              <span className="utility-value code">{state.selectedUtility.id}</span>
+            </div>
+            <div className="utility-hud-row">
+              <span className="utility-label">Depth Below Grade:</span>
+              <span className="utility-value highlight">-{state.selectedUtility.depth} meters</span>
+            </div>
+            <div className="utility-hud-row">
+              <span className="utility-label">Pipe Diameter:</span>
+              <span className="utility-value">{Math.round(state.selectedUtility.diameter * 1000)} mm</span>
+            </div>
+            {state.selectedUtility.material && (
+              <div className="utility-hud-row">
+                <span className="utility-label">Material Spec:</span>
+                <span className="utility-value">{state.selectedUtility.material}</span>
+              </div>
+            )}
+            {state.selectedUtility.flowRateOrSlope && (
+              <div className="utility-hud-row">
+                <span className="utility-label">Flow / Gradient:</span>
+                <span className="utility-value">{state.selectedUtility.flowRateOrSlope}</span>
+              </div>
+            )}
+            <div className="utility-hud-desc">
+              {state.selectedUtility.description}
+            </div>
+
+            {state.selectedUtility.connectedBuildingIds && state.selectedUtility.connectedBuildingIds.length > 0 && (
+              <div className="utility-hud-connections">
+                <span className="utility-label">Connected Buildings:</span>
+                <div className="utility-pills-wrap">
+                  {state.selectedUtility.connectedBuildingIds.map((bId) => {
+                    const bldg = state.siteData.buildings.find(b => b.id === bId);
+                    return (
+                      <button
+                        key={bId}
+                        className="utility-bldg-pill"
+                        onClick={() => {
+                          if (bldg) {
+                            dispatch({ type: 'SELECT_BUILDING', building: bldg });
+                            window.dispatchEvent(new CustomEvent('fly-to-building', { detail: bldg }));
+                          }
+                        }}
+                        title={`Fly camera to ${bldg?.name || bId}`}
+                      >
+                        🏢 {bldg?.name || bId}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

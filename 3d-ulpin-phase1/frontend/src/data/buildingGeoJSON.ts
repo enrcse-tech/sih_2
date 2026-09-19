@@ -4,7 +4,7 @@
 // Center: 31.2536°N, 75.7028°E
 // ============================================================================
 
-import type { FeatureCollection, Polygon } from 'geojson';
+import type { FeatureCollection, Polygon, LineString } from 'geojson';
 
 export interface BuildingGeoProperties {
   buildingId: string;
@@ -482,6 +482,234 @@ export const emptyParcelBoundaries: FeatureCollection<Polygon, EmptyParcelGeoPro
           [75.7040, 31.2556],
           [75.7040, 31.2548],
         ]],
+      },
+    },
+  ],
+};
+
+// ---------------------------------------------------------------------------
+// UNDERGROUND UTILITIES GEOJSON (REAL GPS MAPPING)
+// Coordinates mapped using site center: 31.2536°N, 75.7028°E
+// ---------------------------------------------------------------------------
+
+export interface UtilityGeoProperties {
+  id: string;
+  type: 'water' | 'sewer' | 'electrical';
+  name: string;
+  depth: number;
+  diameter: number;
+  material: string;
+  flowRateOrSlope: string;
+  color: string;
+  connectedBuildings: string;
+}
+
+export const waterNetworkGeoJSON: FeatureCollection<LineString, UtilityGeoProperties> = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: {
+        id: 'WTR-001',
+        type: 'water',
+        name: 'North Academic Main Water Grid',
+        depth: 2.2,
+        diameter: 0.5,
+        material: 'HDPE PE100 SDR11',
+        flowRateOrSlope: '4.8 bar / 720 L/min',
+        color: '#0284c7',
+        connectedBuildings: 'Block 25, Block 26, Admissions, Chancellory',
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [75.7008, 31.2544],
+          [75.7010, 31.2544],
+          [75.7020, 31.2544],
+          [75.7028, 31.2544],
+          [75.7035, 31.2544],
+          [75.7045, 31.2544],
+          [75.7047, 31.2544],
+        ],
+      },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        id: 'WTR-002',
+        type: 'water',
+        name: 'North-South Central Water Spine',
+        depth: 2.4,
+        diameter: 0.45,
+        material: 'Ductile Iron Class K9',
+        flowRateOrSlope: '4.5 bar / 560 L/min',
+        color: '#0284c7',
+        connectedBuildings: 'Biosciences, Central Plaza, Block 27, Block 28',
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [75.7028, 31.2553],
+          [75.7028, 31.2547],
+          [75.7028, 31.2544],
+          [75.7028, 31.2538],
+          [75.7028, 31.2531],
+        ],
+      },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        id: 'WTR-003',
+        type: 'water',
+        name: 'East Sector Water Feeder (CSE Ring)',
+        depth: 2.2,
+        diameter: 0.4,
+        material: 'HDPE PE100 SDR11',
+        flowRateOrSlope: '4.2 bar / 640 L/min',
+        color: '#0284c7',
+        connectedBuildings: 'Chancellory, Block 33 CSE, Auditorium',
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [75.7045, 31.2544],
+          [75.7046, 31.2539],
+          [75.7046, 31.2532],
+          [75.7041, 31.2531],
+          [75.7034, 31.2531],
+        ],
+      },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        id: 'WTR-004',
+        type: 'water',
+        name: 'South & West Sector Water Loop',
+        depth: 2.3,
+        diameter: 0.35,
+        material: 'HDPE PE100 SDR11',
+        flowRateOrSlope: '4.0 bar / 480 L/min',
+        color: '#0284c7',
+        connectedBuildings: 'Block 37, Block 36, Block 35, Services & Lovely Bake',
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [75.7020, 31.2531],
+          [75.7020, 31.2524],
+          [75.7028, 31.2524],
+          [75.7034, 31.2524],
+          [75.7028, 31.2524],
+          [75.7010, 31.2524],
+          [75.7010, 31.2525],
+        ],
+      },
+    },
+  ],
+};
+
+export const sewageNetworkGeoJSON: FeatureCollection<LineString, UtilityGeoProperties> = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: {
+        id: 'SEW-001',
+        type: 'sewer',
+        name: 'North Spine Gravity Sewer Interceptor',
+        depth: 3.8,
+        diameter: 0.6,
+        material: 'Reinforced Concrete Pipe (RCC NP3)',
+        flowRateOrSlope: '1:140 Gravity Gradient / 820 L/min',
+        color: '#ea580c',
+        connectedBuildings: 'Chancellory, Admissions, Block 26, Block 25 -> West Trunk',
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [75.7045, 31.2545],
+          [75.7035, 31.2545],
+          [75.7020, 31.2545],
+          [75.7010, 31.2545],
+          [75.7007, 31.2545],
+          [75.7007, 31.2536],
+          [75.7007, 31.2525],
+          [75.7010, 31.2525],
+        ],
+      },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        id: 'SEW-002',
+        type: 'sewer',
+        name: 'Central Biosciences & Academic Wastewater Collector',
+        depth: 3.6,
+        diameter: 0.5,
+        material: 'Twin-Wall Corrugated HDPE (SN8)',
+        flowRateOrSlope: '1:130 Gravity Gradient / 540 L/min',
+        color: '#ea580c',
+        connectedBuildings: 'Biosciences, Block 27, Block 37 -> STP',
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [75.7028, 31.2554],
+          [75.7023, 31.2547],
+          [75.7020, 31.2539],
+          [75.7020, 31.2532],
+          [75.7016, 31.2528],
+          [75.7010, 31.2525],
+        ],
+      },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        id: 'SEW-003',
+        type: 'sewer',
+        name: 'South-East Gravity Sewer Outfall to STP',
+        depth: 4.0,
+        diameter: 0.55,
+        material: 'Reinforced Concrete Pipe (RCC NP3)',
+        flowRateOrSlope: '1:150 Gravity Gradient / 780 L/min',
+        color: '#ea580c',
+        connectedBuildings: 'Block 33 CSE, Auditorium, Block 35, Block 36 -> STP B011',
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [75.7046, 31.2533],
+          [75.7035, 31.2532],
+          [75.7035, 31.2525],
+          [75.7020, 31.2525],
+          [75.7011, 31.2525],
+          [75.7010, 31.2525],
+        ],
+      },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        id: 'SEW-004',
+        type: 'sewer',
+        name: 'Central STP Primary Inflow Wet Well',
+        depth: 4.2,
+        diameter: 0.8,
+        material: 'Epoxy-Coated Ductile Iron',
+        flowRateOrSlope: 'Final Discharge Header / 2,140 L/min Peak',
+        color: '#c2410c',
+        connectedBuildings: 'STP Bio-Digester Equalization Tank (B011)',
+      },
+      geometry: {
+        type: 'LineString',
+        coordinates: [
+          [75.7011, 31.2525],
+          [75.7010, 31.2525],
+          [75.7008, 31.2525],
+        ],
       },
     },
   ],

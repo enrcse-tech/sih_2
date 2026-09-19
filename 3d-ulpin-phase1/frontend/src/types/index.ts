@@ -149,8 +149,8 @@ export type PropertyType =
 /** An underground utility line */
 export interface UndergroundUtility {
   id: string;
-  /** Utility type: "water", "electrical", "sewer", "gas" */
-  type: string;
+  /** Utility type: "water", "sewer", "electrical", "gas" */
+  type: 'water' | 'sewer' | 'electrical' | 'gas' | string;
   /** Path points as {x, y} in meters relative to site center */
   path: { x: number; y: number }[];
   /** Depth below surface in meters (positive value) */
@@ -161,6 +161,16 @@ export interface UndergroundUtility {
   color: string;
   /** Description of the utility */
   description: string;
+  /** Pipe material (e.g. "HDPE PN16", "RCC Class NP3") */
+  material?: string;
+  /** Flow pressure or gravity gradient (e.g. "4.2 bar / 520 LPM", "1:150 Gravity Slope") */
+  flowRateOrSlope?: string;
+  /** List of building IDs connected to this pipeline */
+  connectedBuildingIds?: string[];
+  /** Manhole / inspection chamber surface locations */
+  manholes?: { x: number; y: number; label: string }[];
+  /** Vertical riser stubs connecting underground line to building basements */
+  risers?: { x: number; y: number; buildingId: string; height: number }[];
 }
 
 // ---------------------------------------------------------------------------
@@ -248,6 +258,8 @@ export interface AppState {
   selectedFloor: Floor | null;
   selectedProperty: Property | null;
   selectedParcel: Parcel | null;
+  selectedUtility: UndergroundUtility | null;
+  undergroundXRay: boolean;
   showRegistrationModal: boolean;
   activityLog: ActivityLogEntry[];
   searchQuery: string;
@@ -264,6 +276,8 @@ export type AppAction =
   | { type: 'SELECT_FLOOR'; floor: Floor | null }
   | { type: 'SELECT_PROPERTY'; property: Property | null }
   | { type: 'SELECT_PARCEL'; parcel: Parcel | null }
+  | { type: 'SELECT_UTILITY'; utility: UndergroundUtility | null }
+  | { type: 'TOGGLE_UNDERGROUND_XRAY' }
   | { type: 'OPEN_REGISTRATION_MODAL' }
   | { type: 'CLOSE_REGISTRATION_MODAL' }
   | { type: 'REGISTER_BUILDING'; registration: BuildingRegistration; newBuilding: Building; newProperties: Property[]; newFloors: Floor[] }
