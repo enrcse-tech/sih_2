@@ -103,6 +103,7 @@ html, body, #root {
   justify-content: space-between;
   padding: 0 18px;
   z-index: 50;
+  gap: 12px;
 }
 
 .topbar-logo {
@@ -112,6 +113,8 @@ html, body, #root {
   font-weight: 800;
   font-size: 16px;
   letter-spacing: -0.2px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .topbar-logo-icon {
@@ -137,6 +140,8 @@ html, body, #root {
   border-radius: 20px;
   padding: 7px 16px;
   width: 360px;
+  min-width: 180px;
+  flex-shrink: 1;
   transition: all var(--transition-fast);
 }
 
@@ -163,6 +168,8 @@ html, body, #root {
   display: flex;
   align-items: center;
   gap: 14px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .topbar-coords {
@@ -211,7 +218,7 @@ html, body, #root {
   position: absolute;
   top: 78px;
   left: 12px;
-  bottom: 50px;
+  bottom: 56px;
   width: 250px;
   background: var(--bg-glass);
   backdrop-filter: blur(20px);
@@ -433,7 +440,7 @@ html, body, #root {
 
 .scene-overlay {
   position: absolute;
-  bottom: 48px;
+  bottom: 58px;
   left: 275px;
   font-size: 11px;
   color: var(--text-sub);
@@ -443,13 +450,14 @@ html, body, #root {
   pointer-events: none;
   font-family: 'JetBrains Mono', monospace;
   border: 1px solid var(--border-glass);
+  z-index: 35;
 }
 
 /* Floating PIP Google Map Toggle Button */
 .pip-toggle-btn {
   position: absolute;
   top: 78px;
-  right: 12px;
+  right: 344px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -551,7 +559,7 @@ html, body, #root {
   position: absolute;
   top: 78px;
   right: 12px;
-  bottom: 50px;
+  bottom: 56px;
   width: 320px;
   background: var(--bg-glass);
   backdrop-filter: blur(20px);
@@ -563,6 +571,18 @@ html, body, #root {
   display: flex;
   flex-direction: column;
   z-index: 40;
+  animation: slideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .property-empty {
@@ -724,9 +744,9 @@ html, body, #root {
 
 .bottom-panel {
   position: absolute;
-  bottom: 8px;
-  left: 272px;
-  right: 342px;
+  bottom: 10px;
+  left: 12px;
+  right: 344px;
   height: 38px;
   background: var(--bg-glass);
   backdrop-filter: blur(20px);
@@ -738,11 +758,15 @@ html, body, #root {
   flex-direction: column;
   overflow: hidden;
   z-index: 40;
-  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1), left 0.3s ease;
+}
+
+.dashboard:has(.left-panel) .bottom-panel {
+  left: 272px;
 }
 
 .bottom-panel.expanded {
-  height: 220px;
+  height: 230px;
 }
 
 .bottom-tabs {
@@ -1212,7 +1236,7 @@ html, body, #root {
 
 .map-legend {
   position: absolute;
-  bottom: 40px;
+  bottom: 58px;
   left: 12px;
   background: var(--bg-glass);
   backdrop-filter: blur(20px);
@@ -1222,6 +1246,11 @@ html, body, #root {
   padding: 12px;
   z-index: 40;
   min-width: 200px;
+  transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard:has(.bottom-panel.expanded) .map-legend {
+  bottom: 248px;
 }
 
 .map-legend-title {
@@ -1323,12 +1352,11 @@ html, body, #root {
 .interior-back-bar {
   position: absolute;
   top: 78px;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 274px;
   display: flex;
   align-items: center;
   gap: 12px;
-  z-index: 50;
+  z-index: 45;
   animation: fadeIn 0.3s ease;
 }
 
@@ -1379,6 +1407,10 @@ html, body, #root {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-main);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .interior-building-floors {

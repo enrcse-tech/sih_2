@@ -19,13 +19,14 @@ export default function Dashboard() {
       <TopBar />
       {state.viewMode === 'map' ? (
         <>
-          {/* Map View — full area, no side panels */}
+          {/* Map View — full screen with property details & bottom GIS dock */}
           <MapView />
           <PropertyDetails />
+          <BottomPanel />
         </>
       ) : (
         <>
-          {/* 3D Interior View — original layout with all panels */}
+          {/* 3D Interior View — detailed floor-by-floor 3D view with layer control */}
           <LayerControl />
           <BuildingInterior3D />
           <PropertyDetails />

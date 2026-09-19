@@ -4,7 +4,7 @@
 // ============================================================================
 
 import { useMemo, useState } from 'react';
-import { Box, Eye, CheckCircle, FileText, Building2, Copy, Check, MapPin, Layers, Video } from 'lucide-react';
+import { Box, Eye, CheckCircle, FileText, Building2, Copy, Check, MapPin, Layers, Video, X } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import { getFloorForProperty, getPropertyTypeColor } from '../services/buildingGenerator';
 import { validateProperty } from '../services/validationService';
@@ -41,24 +41,9 @@ export default function PropertyDetails() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Hide right panel completely if no property/unit is selected
   if (!selectedProperty) {
-    return (
-      <div className="right-panel">
-        <div className="property-empty">
-          <div className="property-empty-icon">
-            <Building2 size={48} strokeWidth={1.5} />
-          </div>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-main)', marginBottom: 6 }}>
-              Select a 3D Property Unit
-            </div>
-            <div style={{ fontSize: 12, lineHeight: 1.6, color: 'var(--text-sub)' }}>
-              Click any colored 3D unit or building on the map to view its <strong>Prototype 3D ULPIN</strong>, floor coordinates, ownership & spatial validation.
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   const building = siteData.buildings.find((b) => b.id === selectedProperty.buildingId);
@@ -80,19 +65,41 @@ export default function PropertyDetails() {
       {/* Header */}
       <div className="panel-section animate-slide-in">
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
-          <div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: 6 }}>
-              <Box size={18} style={{ color: 'var(--accent-cyan)' }} />
-              Unit {selectedProperty.unitNumber}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Box size={18} style={{ color: 'var(--accent-cyan)' }} />
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-main)' }}>
+                Unit {selectedProperty.unitNumber}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-sub)' }}>{selectedProperty.id}</div>
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text-sub)', marginTop: 2 }}>{selectedProperty.id}</div>
           </div>
-          <span
-            className={`type-badge ${selectedProperty.type.toLowerCase().replace(' ', '-')}`}
-            style={{ background: `${typeColor}25`, color: typeColor, border: `1px solid ${typeColor}44` }}
-          >
-            {selectedProperty.type}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span
+              className={`type-badge ${selectedProperty.type.toLowerCase().replace(' ', '-')}`}
+              style={{ background: `${typeColor}25`, color: typeColor, border: `1px solid ${typeColor}44` }}
+            >
+              {selectedProperty.type}
+            </span>
+            <button
+              onClick={() => dispatch({ type: 'SELECT_PROPERTY', property: null })}
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid var(--border-glass)',
+                color: 'var(--text-muted)',
+                cursor: 'pointer',
+                padding: '4px 6px',
+                borderRadius: 8,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.15s ease',
+              }}
+              title="Close Property Details"
+            >
+              <X size={14} />
+            </button>
+          </div>
         </div>
 
         {/* Prototype 3D ULPIN Box */}

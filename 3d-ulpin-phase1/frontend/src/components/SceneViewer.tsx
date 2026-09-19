@@ -5,7 +5,7 @@
 
 import { useRef, useState, useEffect, useCallback, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Text, Line, Grid, Edges, Environment } from '@react-three/drei';
+import { OrbitControls, Text, Line, Grid, Edges } from '@react-three/drei';
 import { MapPin, ExternalLink, Satellite, Map as MapIcon, X, Play, Pause, SkipForward, Video, Box } from 'lucide-react';
 import * as THREE from 'three';
 import { useAppContext } from '../context/AppContext';
@@ -258,13 +258,13 @@ function AnimatedRooftopFan({ position, isTransparent }: { position: [number, nu
     <group position={position}>
       <mesh>
         <cylinderGeometry args={[1.4, 1.4, 1.2, 16]} />
-        <meshStandardMaterial color="#334155" metalness={0.8} roughness={0.3} transparent={isTransparent} opacity={isTransparent ? 0.12 : 1.0} />
+        <meshStandardMaterial color="#334155" metalness={0.1} roughness={0.7} transparent={isTransparent} opacity={isTransparent ? 0.12 : 1.0} />
       </mesh>
       <group ref={fanRef} position={[0, 0.65, 0]}>
         {[0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2].map((rot, idx) => (
           <mesh key={idx} rotation={[0, rot, 0]}>
             <boxGeometry args={[1.2, 0.05, 0.28]} />
-            <meshStandardMaterial color="#06b6d4" metalness={0.9} roughness={0.1} />
+            <meshStandardMaterial color="#06b6d4" metalness={0.1} roughness={0.6} />
           </mesh>
         ))}
       </group>
@@ -346,11 +346,11 @@ function CampusStreetlights({ isNight }: { isNight: boolean }) {
         <group key={`lamp-${i}`} position={[x, y, z]}>
           <mesh position={[0, 3.5, 0]}>
             <cylinderGeometry args={[0.12, 0.18, 7, 8]} />
-            <meshStandardMaterial color="#334155" metalness={0.9} roughness={0.2} />
+            <meshStandardMaterial color="#334155" metalness={0.1} roughness={0.7} />
           </mesh>
           <mesh position={[0.6, 6.8, 0]} rotation={[0, 0, Math.PI / 2]}>
             <cylinderGeometry args={[0.08, 0.08, 1.4, 6]} />
-            <meshStandardMaterial color="#334155" metalness={0.9} />
+            <meshStandardMaterial color="#334155" metalness={0.1} />
           </mesh>
           <mesh position={[1.2, 6.6, 0]}>
             <sphereGeometry args={[0.35, 10, 10]} />
@@ -553,8 +553,8 @@ function DetailedArchitecturalBuilding({ building, isSelected, onClick }: {
                 color={facadeColor}
                 emissive={facadeEmissive}
                 emissiveIntensity={emissiveIntensity}
-                roughness={0.02}
-                metalness={0.96}
+                roughness={0.85}
+                metalness={0.05}
                 side={THREE.DoubleSide}
                 transparent={facadeTransparent}
                 opacity={facadeOpacity}
@@ -572,8 +572,8 @@ function DetailedArchitecturalBuilding({ building, isSelected, onClick }: {
                 color={facadeColor}
                 emissive={facadeEmissive}
                 emissiveIntensity={emissiveIntensity}
-                roughness={0.02}
-                metalness={0.96}
+                roughness={0.85}
+                metalness={0.05}
                 side={THREE.DoubleSide}
                 transparent={facadeTransparent}
                 opacity={facadeOpacity}
@@ -593,8 +593,8 @@ function DetailedArchitecturalBuilding({ building, isSelected, onClick }: {
                 color={facadeColor}
                 emissive={facadeEmissive}
                 emissiveIntensity={emissiveIntensity}
-                roughness={0.02}
-                metalness={0.96}
+                roughness={0.85}
+                metalness={0.05}
                 side={THREE.DoubleSide}
                 transparent={facadeTransparent}
                 opacity={facadeOpacity}
@@ -612,8 +612,8 @@ function DetailedArchitecturalBuilding({ building, isSelected, onClick }: {
                 color={facadeColor}
                 emissive={facadeEmissive}
                 emissiveIntensity={emissiveIntensity}
-                roughness={0.02}
-                metalness={0.96}
+                roughness={0.85}
+                metalness={0.05}
                 side={THREE.DoubleSide}
                 transparent={facadeTransparent}
                 opacity={facadeOpacity}
@@ -624,7 +624,7 @@ function DetailedArchitecturalBuilding({ building, isSelected, onClick }: {
             {!isUpperFloor && [-building.width * 0.25, 0, building.width * 0.25].map((mx, idx) => (
               <mesh key={`mullion-n-${idx}`} position={[mx, 0, building.depth / 2 + 0.12]}>
                 <boxGeometry args={[0.2, fHeight - 0.6, 0.15]} />
-                <meshStandardMaterial color="#000000" roughness={0.1} metalness={0.9} />
+                <meshStandardMaterial color="#0f172a" roughness={0.9} metalness={0.05} />
               </mesh>
             ))}
 
@@ -665,8 +665,8 @@ function DetailedArchitecturalBuilding({ building, isSelected, onClick }: {
           <boxGeometry args={[building.width + 0.6, 0.8, building.depth + 0.6]} />
           <meshStandardMaterial
             color="#020617"
-            roughness={0.3}
-            metalness={0.9}
+            roughness={0.7}
+            metalness={0.1}
             transparent={isRoofTransparent}
             opacity={isRoofTransparent ? 0.12 : 1.0}
           />
@@ -676,8 +676,8 @@ function DetailedArchitecturalBuilding({ building, isSelected, onClick }: {
           <boxGeometry args={[building.width * 0.35, 4.8, building.depth * 0.35]} />
           <meshStandardMaterial
             color="#090d16"
-            roughness={0.3}
-            metalness={0.8}
+            roughness={0.7}
+            metalness={0.1}
             transparent={isRoofTransparent}
             opacity={isRoofTransparent ? 0.12 : 1.0}
           />
@@ -692,8 +692,8 @@ function DetailedArchitecturalBuilding({ building, isSelected, onClick }: {
           <boxGeometry args={[building.width * 0.35, 0.15, building.depth * 0.35]} />
           <meshStandardMaterial
             color="#0284c7"
-            roughness={0.1}
-            metalness={0.9}
+            roughness={0.6}
+            metalness={0.1}
             transparent={isRoofTransparent}
             opacity={isRoofTransparent ? 0.12 : 1.0}
           />
@@ -745,20 +745,20 @@ function DetailedArchitecturalBuilding({ building, isSelected, onClick }: {
       <group position={[0, 0, building.depth / 2 + 3]}>
         <mesh position={[0, 3.5, 0]}>
           <boxGeometry args={[building.width * 0.45, 0.5, 6]} />
-          <meshStandardMaterial color="#06b6d4" metalness={0.9} roughness={0.2} />
+          <meshStandardMaterial color="#06b6d4" metalness={0.1} roughness={0.6} />
         </mesh>
         <mesh position={[-building.width * 0.2, 1.75, 2.5]}>
           <cylinderGeometry args={[0.3, 0.3, 3.5, 16]} />
-          <meshStandardMaterial color="#64748b" metalness={0.7} />
+          <meshStandardMaterial color="#64748b" metalness={0.1} />
         </mesh>
         <mesh position={[building.width * 0.2, 1.75, 2.5]}>
           <cylinderGeometry args={[0.3, 0.3, 3.5, 16]} />
-          <meshStandardMaterial color="#64748b" metalness={0.7} />
+          <meshStandardMaterial color="#64748b" metalness={0.1} />
         </mesh>
         {/* Glass Entrance Doors */}
         <mesh position={[0, 1.6, -2.8]}>
           <boxGeometry args={[building.width * 0.25, 3.2, 0.2]} />
-          <meshStandardMaterial color="#38bdf8" roughness={0.05} metalness={0.95} transparent opacity={0.8} />
+          <meshStandardMaterial color="#38bdf8" roughness={0.7} metalness={0.05} transparent opacity={0.8} />
         </mesh>
       </group>
 
@@ -1197,7 +1197,6 @@ function SceneContent({ isWalkthrough, isPaused, walkthroughTarget }: {
 
   const isNight = state.timeOfDay === 'night';
   const isSunset = state.timeOfDay === 'sunset';
-  const envPreset = isNight ? 'night' : isSunset ? 'sunset' : 'city';
 
   return (
     <>
@@ -1213,7 +1212,7 @@ function SceneContent({ isWalkthrough, isPaused, walkthroughTarget }: {
         intensity={isNight ? 0.1 : isSunset ? 0.3 : 0.4}
         color={isNight ? '#312e81' : '#64748b'}
       />
-      <Environment preset={envPreset} />
+      {/* Environment HDRI removed — plain lighting only, no reflections */}
 
       {/* Ground */}
       <GroundPlane />
@@ -1428,19 +1427,19 @@ export default function SceneViewer() {
       {!isWalkthrough && state.selectedBuilding && (
         <div className="property-quick-bar animate-fade-in" style={{
           position: 'absolute',
-          top: 70,
+          top: 130,
           left: '50%',
           transform: 'translateX(-50%)',
-          zIndex: 15,
-          background: 'rgba(15, 23, 42, 0.88)',
-          backdropFilter: 'blur(16px)',
+          zIndex: 35,
+          background: 'rgba(15, 23, 42, 0.92)',
+          backdropFilter: 'blur(20px)',
           border: '1px solid var(--border-glass)',
           borderRadius: 20,
           padding: '6px 14px',
           display: 'flex',
           alignItems: 'center',
           gap: 10,
-          maxWidth: '85%',
+          maxWidth: 'min(700px, calc(100vw - 640px))',
           overflowX: 'auto',
           boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
         }}>
