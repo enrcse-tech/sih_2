@@ -1,0 +1,8 @@
+[build]
+  command = "cd 3d-ulpin-phase1/frontend && npm install && npm run build"
+  publish = "3d-ulpin-phase1/frontend/dist"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
