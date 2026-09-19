@@ -4,7 +4,7 @@
 // Floor Z ranges are ALWAYS computed, never hardcoded.
 // ============================================================================
 
-import type { Building, Floor, Property } from '../types';
+import type { Building, Floor, Property, BuildingRegistration, Parcel } from '../types';
 
 /**
  * Generate all floors for a building.
@@ -177,3 +177,183 @@ export function getPropertyTypeColor(type: string): string {
   };
   return colors[type] || '#475569';
 }
+
+// ---------------------------------------------------------------------------
+// BUILDING FROM REGISTRATION — Generate complete building data from form inputs
+// ---------------------------------------------------------------------------
+
+
+
+/** Property type distribution based on building type */
+function getPropertyTypesForBuildingType(
+  buildingType: string,
+  floorNumber: number
+): string[] {
+  const typeMap: Record<string, { basement: string[]; ground: string[]; upper: string[] }> = {
+    'Academic': {
+      basement: ['Parking', 'Parking', 'Utility Corridor', 'Storage', 'Parking', 'Storage'],
+      ground: ['Office', 'Classroom', 'Office', 'Library', 'Classroom', 'Office'],
+      upper: ['Classroom', 'Laboratory', 'Office', 'Classroom', 'Laboratory', 'Office'],
+    },
+    'Residential': {
+      basement: ['Parking', 'Parking', 'Storage', 'Parking', 'Storage', 'Utility Corridor'],
+      ground: ['Commercial', 'Office', 'Commercial', 'Office', 'Commercial', 'Office'],
+      upper: ['Residential', 'Residential', 'Residential', 'Residential', 'Residential', 'Residential'],
+    },
+    'Commercial': {
+      basement: ['Parking', 'Parking', 'Parking', 'Storage', 'Parking', 'Utility Corridor'],
+      ground: ['Commercial', 'Commercial', 'Office', 'Commercial', 'Commercial', 'Office'],
+      upper: ['Office', 'Commercial', 'Office', 'Commercial', 'Office', 'Commercial'],
+    },
+    'Mixed-Use': {
+      basement: ['Parking', 'Parking', 'Utility Corridor', 'Storage', 'Parking', 'Storage'],
+      ground: ['Commercial', 'Office', 'Commercial', 'Residential', 'Commercial', 'Office'],
+      upper: ['Residential', 'Office', 'Residential', 'Classroom', 'Office', 'Residential'],
+    },
+  };
+
+  const config = typeMap[buildingType] || typeMap['Mixed-Use'];
+  if (floorNumber < 0) return config.basement;
+  if (floorNumber === 0) return config.ground;
+  return config.upper;
+}
+
+/** Generate a ULPIN for registered buildings */
+function makeRegisteredUlpin(buildingId: string, floorNumber: number, unitNumber: string): string {
+  const floorStr = floorNumber < 0
+    ? `B${String(Math.abs(floorNumber)).padStart(2, '0')}`
+    : `F${String(floorNumber).padStart(2, '0')}`;
+  return `3D-IN-${buildingId}-${floorStr}-${unitNumber}`;
+}
+
+/** Generate properties for a single floor of a registered building */
+function generateRegisteredFloorProperties(
+  buildingId: string,
+  floorNumber: number,
+  floorLabel: string,
+  buildingWidth: number,
+  buildingDepth: number,
+  zMin: number,
+  zMax: number,
+  types: string[],
+  ownerName: string,
+): Property[] {
+  const halfW = buildingWidth / 2;
+  const halfD = buildingDepth / 2;
+  const corridorW = 3;
+  const corridorD = 3;
+
+  const colWidth = (buildingWidth - corridorW * 2) / 3;
+  const rowDepth = (buildingDepth - corridorD) / 2;
+
+  const floorPrefix = floorNumber < 0
+    ? `B${Math.abs(floorNumber)}`
+    : floorNumber === 0 ? 'G' : `${floorNumber}`;
+
+  const floorId = `${buildingId}-${floorLabel}`;
+
+  const positions = [
+    { xMin: -halfW, xMax: -halfW + colWidth, yMin: halfD - rowDepth, yMax: halfD },
+    { xMin: -colWidth / 2, xMax: colWidth / 2, yMin: halfD - rowDepth, yMax: halfD },
+    { xMin: halfW - colWidth, xMax: halfW, yMin: halfD - rowDepth, yMax: halfD },
+    { xMin: -halfW, xMax: -halfW + colWidth, yMin: -halfD, yMax: -halfD + rowDepth },
+    { xMin: -colWidth / 2, xMax: colWidth / 2, yMin: -halfD, yMax: -halfD + rowDepth },
+    { xMin: halfW - colWidth, xMax: halfW, yMin: -halfD, yMax: -halfD + rowDepth },
+  ];
+
+  return positions.map((pos, i) => {
+    const unitNum = i + 1;
+    const unitNumber = `U${floorPrefix}${String(unitNum).padStart(2, '0')}`;
+    const area = Math.round((pos.xMax - pos.xMin) * (pos.yMax - pos.yMin) * 100) / 100;
+
+    return {
+      id: `${buildingId}-${floorLabel}-${unitNumber}`,
+      buildingId,
+      floorId,
+      floorNumber,
+      unitNumber,
+      type: (types[i % types.length]) as Property['type'],
+      xMin: Math.round(pos.xMin * 100) / 100,
+      xMax: Math.round(pos.xMax * 100) / 100,
+      yMin: Math.round(pos.yMin * 100) / 100,
+      yMax: Math.round(pos.yMax * 100) / 100,
+      zMin,
+      zMax,
+      area,
+      ulpin: makeRegisteredUlpin(buildingId, floorNumber, unitNumber),
+      owner: ownerName,
+      status: 'Active',
+    };
+  });
+}
+
+/**
+ * Generate a complete Building + Properties + Floors from a BuildingRegistration.
+ * Computes parcel center to place the building, assigns a unique ID, and
+ * generates floor/property data using the same logic as existing buildings.
+ */
+export function generateBuildingFromRegistration(
+  registration: BuildingRegistration,
+  parcel: Parcel,
+  existingBuildingCount: number,
+): { building: Building; properties: Property[]; floors: Floor[] } {
+  // Compute parcel center for building placement
+  const centerX = parcel.footprint.reduce((sum, [x]) => sum + x, 0) / parcel.footprint.length;
+  const centerY = parcel.footprint.reduce((sum, [, y]) => sum + y, 0) / parcel.footprint.length;
+
+  // Generate unique building ID
+  const buildingId = `BR${String(existingBuildingCount + 1).padStart(3, '0')}`;
+
+  // Color based on building type
+  const typeColors: Record<string, string> = {
+    'Academic': '#3b82f6',
+    'Residential': '#8b5cf6',
+    'Commercial': '#f59e0b',
+    'Mixed-Use': '#06b6d4',
+  };
+
+  const building: Building = {
+    id: buildingId,
+    name: registration.buildingName,
+    parcelId: registration.parcelId,
+    position: { x: centerX, y: centerY },
+    width: registration.width,
+    depth: registration.depth,
+    totalHeight: registration.numberOfFloors * registration.floorHeight,
+    numberOfFloors: registration.numberOfFloors,
+    floorHeight: registration.floorHeight,
+    groundElevation: 0,
+    basementFloors: registration.basementFloors,
+    color: typeColors[registration.buildingType] || '#06b6d4',
+    isRegistered: true,
+    registrationImages: {
+      floorPlans: registration.floorPlanImages,
+      buildingDesigns: registration.buildingDesignImages,
+      photos: registration.buildingPhotos,
+    },
+  };
+
+  // Generate floors
+  const floors = generateFloors(building);
+
+  // Generate properties for every floor
+  const properties: Property[] = [];
+  for (let i = -registration.basementFloors; i < registration.numberOfFloors; i++) {
+    const label = i < 0 ? `B${Math.abs(i)}` : i === 0 ? 'G' : `F${i}`;
+    const zMin = i * registration.floorHeight;
+    const zMax = zMin + registration.floorHeight;
+    const types = getPropertyTypesForBuildingType(registration.buildingType, i);
+
+    properties.push(
+      ...generateRegisteredFloorProperties(
+        buildingId, i, label,
+        registration.width, registration.depth,
+        zMin, zMax, types,
+        registration.owner.name,
+      )
+    );
+  }
+
+  return { building, properties, floors };
+}
+

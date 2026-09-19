@@ -9,6 +9,7 @@ import MapView from './MapView';
 import BuildingInterior3D from './BuildingInterior3D';
 import PropertyDetails from './PropertyDetails';
 import BottomPanel from './BottomPanel';
+import RegistrationModal from './RegistrationModal';
 import { useAppContext } from '../context/AppContext';
 
 export default function Dashboard() {
@@ -33,6 +34,10 @@ export default function Dashboard() {
           <BottomPanel />
         </>
       )}
+
+      {/* Registration Modal — shown when a vacant parcel is selected */}
+      {state.showRegistrationModal && <RegistrationModal />}
     </div>
   );
 }
+

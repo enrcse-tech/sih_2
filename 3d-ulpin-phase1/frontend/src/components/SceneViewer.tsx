@@ -243,6 +243,121 @@ function ParcelMesh({ parcel }: { parcel: Parcel }) {
 }
 
 // ---------------------------------------------------------------------------
+// EMPTY PARCEL MESH — pulsing vacant plot with registration prompt
+// ---------------------------------------------------------------------------
+
+function EmptyParcelMesh({ parcel, onClick }: { parcel: Parcel; onClick: () => void }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
+
+  // Pulsing glow animation
+  useFrame(({ clock }) => {
+    if (glowRef.current) {
+      const t = Math.sin(clock.elapsedTime * 2) * 0.5 + 0.5;
+      (glowRef.current.material as THREE.MeshStandardMaterial).opacity = 0.08 + t * 0.12;
+    }
+  });
+
+  const shape = useMemo(() => {
+    const s = new THREE.Shape();
+    parcel.footprint.forEach(([x, y], i) => {
+      if (i === 0) s.moveTo(x, y);
+      else s.lineTo(x, y);
+    });
+    s.closePath();
+    return s;
+  }, [parcel.footprint]);
+
+  const centerX = parcel.footprint.reduce((sum, [x]) => sum + x, 0) / parcel.footprint.length;
+  const centerZ = -parcel.footprint.reduce((sum, [, y]) => sum + y, 0) / parcel.footprint.length;
+
+  return (
+    <group>
+      {/* Pulsing fill */}
+      <mesh ref={glowRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.15, 0]}>
+        <extrudeGeometry args={[shape, { depth: 0.2, bevelEnabled: false }]} />
+        <meshStandardMaterial
+          color={parcel.color}
+          transparent
+          opacity={0.15}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+
+      {/* Dashed outline */}
+      <Line
+        points={[...parcel.footprint.map(([x, y]) => [x, 0.6, -y] as [number, number, number]),
+                 [parcel.footprint[0][0], 0.6, -parcel.footprint[0][1]]]}
+        color={parcel.color}
+        lineWidth={3}
+        opacity={0.9}
+        transparent
+        dashed
+        dashSize={4}
+        gapSize={3}
+      />
+
+      {/* Clickable center zone */}
+      <mesh
+        ref={meshRef}
+        position={[centerX, 0.3, centerZ]}
+        rotation={[-Math.PI / 2, 0, 0]}
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
+        onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
+        onPointerOut={() => { document.body.style.cursor = 'default'; }}
+      >
+        <planeGeometry args={[40, 30]} />
+        <meshStandardMaterial color={parcel.color} transparent opacity={0.0} side={THREE.DoubleSide} />
+      </mesh>
+
+      {/* Parcel ID + Name */}
+      <Text
+        position={[centerX, 2, centerZ]}
+        fontSize={4}
+        color={parcel.color}
+        anchorX="center"
+        anchorY="middle"
+        rotation={[-Math.PI / 2, 0, 0]}
+        outlineWidth={0.12}
+        outlineColor="#000000"
+      >
+        {parcel.id} — {parcel.name}
+      </Text>
+
+      {/* VACANT label */}
+      <Text
+        position={[centerX, 5, centerZ]}
+        fontSize={3.2}
+        color="#eab308"
+        anchorX="center"
+        anchorY="middle"
+        outlineWidth={0.14}
+        outlineColor="#000000"
+        onClick={(e) => { e.stopPropagation(); onClick(); }}
+        onPointerOver={() => { document.body.style.cursor = 'pointer'; }}
+        onPointerOut={() => { document.body.style.cursor = 'default'; }}
+      >
+        📍 VACANT — CLICK TO REGISTER
+      </Text>
+
+      {/* Corner markers */}
+      {parcel.footprint.map(([x, y], i) => (
+        <mesh key={`corner-${i}`} position={[x, 1, -y]}>
+          <boxGeometry args={[1.5, 2, 1.5]} />
+          <meshStandardMaterial
+            color={parcel.color}
+            emissive={parcel.color}
+            emissiveIntensity={0.8}
+            transparent
+            opacity={0.7}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // ANIMATED ROOFTOP HVAC FAN
 // ---------------------------------------------------------------------------
 
@@ -1223,10 +1338,23 @@ function SceneContent({ isWalkthrough, isPaused, walkthroughTarget }: {
       {/* 3D Streetlights with Night Illumination */}
       <CampusStreetlights isNight={isNight || isSunset} />
 
-      {/* Parcels */}
+      {/* Parcels (non-vacant) */}
       {layers.parcels &&
-        siteData.parcels.map((parcel) => (
+        siteData.parcels.filter(p => !p.isVacant).map((parcel) => (
           <ParcelMesh key={parcel.id} parcel={parcel} />
+        ))}
+
+      {/* Empty / Vacant Parcels */}
+      {layers.parcels &&
+        siteData.parcels.filter(p => p.isVacant).map((parcel) => (
+          <EmptyParcelMesh
+            key={parcel.id}
+            parcel={parcel}
+            onClick={() => {
+              dispatch({ type: 'SELECT_PARCEL', parcel });
+              dispatch({ type: 'OPEN_REGISTRATION_MODAL' });
+            }}
+          />
         ))}
 
       {/* Buildings */}

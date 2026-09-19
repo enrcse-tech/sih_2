@@ -20,6 +20,34 @@ export interface Parcel {
   elevation: number;
   /** Hex color for rendering */
   color: string;
+  /** Whether this parcel is vacant (no buildings, no owner) */
+  isVacant?: boolean;
+  /** Owner info if registered */
+  owner?: ParcelOwner;
+}
+
+/** Owner information for a parcel */
+export interface ParcelOwner {
+  name: string;
+  contact: string;
+  idType: 'Aadhaar' | 'PAN' | 'Passport';
+  idNumber: string;
+}
+
+/** Registration data for a new building on a vacant parcel */
+export interface BuildingRegistration {
+  parcelId: string;
+  owner: ParcelOwner;
+  buildingName: string;
+  numberOfFloors: number;
+  floorHeight: number;
+  width: number;
+  depth: number;
+  basementFloors: number;
+  buildingType: 'Academic' | 'Residential' | 'Commercial' | 'Mixed-Use';
+  floorPlanImages: string[];      // base64 data URLs
+  buildingDesignImages: string[];  // base64 data URLs
+  buildingPhotos: string[];        // base64 data URLs
 }
 
 /** A building situated on a parcel */
@@ -50,6 +78,14 @@ export interface Building {
   latitude?: number;
   /** GPS longitude (optional — for real-world map placement) */
   longitude?: number;
+  /** Whether this building was dynamically registered (not sample data) */
+  isRegistered?: boolean;
+  /** Reference images from the registration */
+  registrationImages?: {
+    floorPlans: string[];
+    buildingDesigns: string[];
+    photos: string[];
+  };
 }
 
 /** A single floor within a building — Z ranges are ALWAYS computed */
@@ -211,6 +247,8 @@ export interface AppState {
   selectedBuilding: Building | null;
   selectedFloor: Floor | null;
   selectedProperty: Property | null;
+  selectedParcel: Parcel | null;
+  showRegistrationModal: boolean;
   activityLog: ActivityLogEntry[];
   searchQuery: string;
   cursorPosition: { x: number; y: number; z: number } | null;
@@ -225,6 +263,10 @@ export type AppAction =
   | { type: 'SELECT_BUILDING'; building: Building | null }
   | { type: 'SELECT_FLOOR'; floor: Floor | null }
   | { type: 'SELECT_PROPERTY'; property: Property | null }
+  | { type: 'SELECT_PARCEL'; parcel: Parcel | null }
+  | { type: 'OPEN_REGISTRATION_MODAL' }
+  | { type: 'CLOSE_REGISTRATION_MODAL' }
+  | { type: 'REGISTER_BUILDING'; registration: BuildingRegistration; newBuilding: Building; newProperties: Property[]; newFloors: Floor[] }
   | { type: 'RESET_SELECTION' }
   | { type: 'SET_SEARCH'; query: string }
   | { type: 'SET_CURSOR_POSITION'; position: { x: number; y: number; z: number } | null }

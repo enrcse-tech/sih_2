@@ -36,6 +36,8 @@ const initialState: AppState = {
   selectedBuilding: null,
   selectedFloor: null,
   selectedProperty: null,
+  selectedParcel: null,
+  showRegistrationModal: false,
   activityLog: [
     {
       id: 'init-1',
@@ -219,6 +221,69 @@ function appReducer(state: AppState, action: AppAction): AppState {
           ...state.activityLog,
         ].slice(0, 50),
       };
+
+    case 'SELECT_PARCEL': {
+      return {
+        ...state,
+        selectedParcel: action.parcel,
+        activityLog: action.parcel
+          ? [
+              newLogEntry('Selection', `Selected parcel ${action.parcel.id} (${action.parcel.name})`),
+              ...state.activityLog,
+            ].slice(0, 50)
+          : state.activityLog,
+      };
+    }
+
+    case 'OPEN_REGISTRATION_MODAL': {
+      return {
+        ...state,
+        showRegistrationModal: true,
+        activityLog: [
+          newLogEntry('Registration', 'Opened building registration form'),
+          ...state.activityLog,
+        ].slice(0, 50),
+      };
+    }
+
+    case 'CLOSE_REGISTRATION_MODAL': {
+      return {
+        ...state,
+        showRegistrationModal: false,
+        selectedParcel: null,
+      };
+    }
+
+    case 'REGISTER_BUILDING': {
+      const { registration, newBuilding, newProperties, newFloors } = action;
+      // Update parcel to no longer be vacant
+      const updatedParcels = state.siteData.parcels.map(p =>
+        p.id === registration.parcelId
+          ? { ...p, isVacant: false, owner: registration.owner }
+          : p
+      );
+
+      return {
+        ...state,
+        siteData: {
+          ...state.siteData,
+          parcels: updatedParcels,
+          buildings: [...state.siteData.buildings, newBuilding],
+          properties: [...state.siteData.properties, ...newProperties],
+        },
+        floors: {
+          ...state.floors,
+          [newBuilding.id]: newFloors,
+        },
+        showRegistrationModal: false,
+        selectedParcel: null,
+        selectedBuilding: newBuilding,
+        activityLog: [
+          newLogEntry('Registration', `Registered new building "${newBuilding.name}" (${newBuilding.id}) on parcel ${registration.parcelId} — ${newBuilding.numberOfFloors} floors, ${newProperties.length} units`),
+          ...state.activityLog,
+        ].slice(0, 50),
+      };
+    }
 
     case 'SET_SEARCH':
       return { ...state, searchQuery: action.query };

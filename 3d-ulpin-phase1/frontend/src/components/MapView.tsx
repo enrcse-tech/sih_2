@@ -10,8 +10,8 @@ import { Building2, Eye, EyeOff, Compass, Globe2, ArrowRight } from 'lucide-reac
 import 'mapbox-gl/dist/mapbox-gl.css';
 
 import { useAppContext } from '../context/AppContext';
-import { buildingFootprints, parcelBoundaries, LPU_CENTER, DEFAULT_ZOOM } from '../data/buildingGeoJSON';
-import type { BuildingGeoProperties } from '../data/buildingGeoJSON';
+import { buildingFootprints, parcelBoundaries, emptyParcelBoundaries, LPU_CENTER, DEFAULT_ZOOM } from '../data/buildingGeoJSON';
+import type { BuildingGeoProperties, EmptyParcelGeoProperties } from '../data/buildingGeoJSON';
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -37,6 +37,11 @@ export default function MapView() {
     lng: number;
     lat: number;
     building: BuildingGeoProperties;
+  } | null>(null);
+  const [vacantPopup, setVacantPopup] = useState<{
+    lng: number;
+    lat: number;
+    parcel: EmptyParcelGeoProperties;
   } | null>(null);
   const [showParcels, setShowParcels] = useState(true);
   const [mapStyle, setMapStyle] = useState<keyof typeof MAP_STYLES>('satellite');
@@ -160,8 +165,26 @@ export default function MapView() {
         }}
         style={{ width: '100%', height: '100%' }}
         mapStyle={MAP_STYLES[mapStyle]}
-        interactiveLayerIds={['buildings-3d', 'buildings-outline']}
-        onClick={onBuildingClick}
+        interactiveLayerIds={['buildings-3d', 'buildings-outline', 'empty-parcels-fill']}
+        onClick={(e: MapMouseEvent) => {
+          // Check if clicked on an empty parcel
+          if (e.features && e.features.length > 0) {
+            const feature = e.features[0];
+            const layerId = feature.layer?.id;
+            if (layerId === 'empty-parcels-fill') {
+              const props = feature.properties as unknown as EmptyParcelGeoProperties;
+              const coords = (feature.geometry as GeoJSON.Polygon).coordinates[0];
+              const lngAvg = coords.reduce((sum, c) => sum + c[0], 0) / coords.length;
+              const latAvg = coords.reduce((sum, c) => sum + c[1], 0) / coords.length;
+              setVacantPopup({ lng: lngAvg, lat: latAvg, parcel: props });
+              setPopupInfo(null);
+              mapRef.current?.flyTo({ center: [lngAvg, latAvg], zoom: 17.5, pitch: 45, duration: 1200 });
+              dispatch({ type: 'LOG_ACTIVITY', action: 'Map', detail: `Clicked vacant parcel ${props.id} (${props.name})` });
+              return;
+            }
+          }
+          onBuildingClick(e);
+        }}
         onMouseMove={onBuildingHover}
         onMouseLeave={onBuildingLeave}
         terrain={{ source: 'mapbox-dem', exaggeration: 1.2 }}
@@ -295,6 +318,43 @@ export default function MapView() {
           />
         </Source>
 
+        {/* Empty / Vacant Parcel Polygons */}
+        <Source id="empty-parcels" type="geojson" data={emptyParcelBoundaries}>
+          <Layer
+            id="empty-parcels-fill"
+            type="fill"
+            paint={{
+              'fill-color': ['get', 'color'],
+              'fill-opacity': 0.12,
+            }}
+          />
+          <Layer
+            id="empty-parcels-outline"
+            type="line"
+            paint={{
+              'line-color': ['get', 'color'],
+              'line-width': 3,
+              'line-opacity': 0.85,
+              'line-dasharray': [4, 3],
+            }}
+          />
+          <Layer
+            id="empty-parcels-label"
+            type="symbol"
+            layout={{
+              'text-field': ['concat', '📍 ', ['get', 'name'], '\nCLICK TO REGISTER'],
+              'text-size': 12,
+              'text-anchor': 'center',
+              'text-max-width': 14,
+            }}
+            paint={{
+              'text-color': '#eab308',
+              'text-halo-color': '#0a0f1a',
+              'text-halo-width': 2,
+            }}
+          />
+        </Source>
+
         {/* Building Info Popup */}
         {popupInfo && (
           <Popup
@@ -345,6 +405,49 @@ export default function MapView() {
               <button className="popup-enter-btn" onClick={enterInteriorView}>
                 <span>Enter 3D Interior</span>
                 <ArrowRight size={14} />
+              </button>
+            </div>
+          </Popup>
+        )}
+
+        {/* Vacant Parcel Popup */}
+        {vacantPopup && (
+          <Popup
+            longitude={vacantPopup.lng}
+            latitude={vacantPopup.lat}
+            anchor="bottom"
+            closeOnClick={false}
+            onClose={() => setVacantPopup(null)}
+            className="building-popup vacant-parcel-popup"
+            maxWidth="280px"
+          >
+            <div className="popup-content">
+              <div className="popup-header">
+                <span style={{ fontSize: 16 }}>📍</span>
+                <span className="popup-building-name">{vacantPopup.parcel.name}</span>
+              </div>
+              <div className="popup-stats">
+                <div className="popup-stat">
+                  <span className="popup-stat-value">{vacantPopup.parcel.area.toLocaleString()}</span>
+                  <span className="popup-stat-label">Area (m²)</span>
+                </div>
+                <div className="popup-stat">
+                  <span className="popup-stat-value" style={{ color: '#eab308' }}>Vacant</span>
+                  <span className="popup-stat-label">Status</span>
+                </div>
+              </div>
+              <button
+                className="popup-register-btn"
+                onClick={() => {
+                  const parcel = state.siteData.parcels.find(p => p.id === vacantPopup.parcel.id);
+                  if (parcel) {
+                    dispatch({ type: 'SELECT_PARCEL', parcel });
+                    dispatch({ type: 'OPEN_REGISTRATION_MODAL' });
+                    setVacantPopup(null);
+                  }
+                }}
+              >
+                🏗️ Register New Building
               </button>
             </div>
           </Popup>

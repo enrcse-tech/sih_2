@@ -1,0 +1,11 @@
+{
+  "name": "sih_2",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix 3d-ulpin-phase1/frontend run dev",
+    "build": "npm --prefix 3d-ulpin-phase1/frontend run build",
+    "lint": "npm --prefix 3d-ulpin-phase1/frontend run lint",
+    "preview": "npm --prefix 3d-ulpin-phase1/frontend run preview"
+  }
+}

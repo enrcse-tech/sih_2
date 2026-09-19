@@ -408,3 +408,82 @@ export const parcelBoundaries: FeatureCollection<Polygon> = {
 /** Campus center coordinates */
 export const LPU_CENTER: [number, number] = [75.7028, 31.2536];
 export const DEFAULT_ZOOM = 17.2;
+
+/**
+ * Empty / Vacant parcel boundaries in GeoJSON format.
+ * These parcels have no buildings and are available for registration.
+ */
+export interface EmptyParcelGeoProperties {
+  id: string;
+  name: string;
+  color: string;
+  isVacant: boolean;
+  area: number;
+}
+
+export const emptyParcelBoundaries: FeatureCollection<Polygon, EmptyParcelGeoProperties> = {
+  type: 'FeatureCollection',
+  features: [
+    {
+      type: 'Feature',
+      properties: {
+        id: 'EP001',
+        name: 'Vacant Plot — East Extension',
+        color: '#eab308',
+        isVacant: true,
+        area: 11700,
+      },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[
+          [75.7058, 31.2522],
+          [75.7070, 31.2522],
+          [75.7070, 31.2536],
+          [75.7058, 31.2536],
+          [75.7058, 31.2522],
+        ]],
+      },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        id: 'EP002',
+        name: 'Vacant Plot — South-West Sector',
+        color: '#f97316',
+        isVacant: true,
+        area: 12000,
+      },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[
+          [75.6995, 31.2508],
+          [75.7012, 31.2508],
+          [75.7012, 31.2516],
+          [75.6995, 31.2516],
+          [75.6995, 31.2508],
+        ]],
+      },
+    },
+    {
+      type: 'Feature',
+      properties: {
+        id: 'EP003',
+        name: 'Vacant Plot — North-East Corner',
+        color: '#14b8a6',
+        isVacant: true,
+        area: 10500,
+      },
+      geometry: {
+        type: 'Polygon',
+        coordinates: [[
+          [75.7040, 31.2548],
+          [75.7058, 31.2548],
+          [75.7058, 31.2556],
+          [75.7040, 31.2556],
+          [75.7040, 31.2548],
+        ]],
+      },
+    },
+  ],
+};
+

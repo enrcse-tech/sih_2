@@ -223,6 +223,45 @@ export const sampleLPUData: SiteData = {
       elevation: 0,
       color: '#f59e0b',
     },
+    // -----------------------------------------------------------------------
+    // EMPTY / VACANT PARCELS — Available for Registration
+    // -----------------------------------------------------------------------
+    {
+      id: 'EP001',
+      name: 'Vacant Plot — East Extension',
+      description: 'Undeveloped land east of Block 33, available for new construction',
+      footprint: [
+        [220, -100], [310, -100], [310, 30], [220, 30],
+      ],
+      area: 11700,
+      elevation: 0,
+      color: '#eab308',
+      isVacant: true,
+    },
+    {
+      id: 'EP002',
+      name: 'Vacant Plot — South-West Sector',
+      description: 'Open land south-west of campus, suitable for residential or academic block',
+      footprint: [
+        [-310, -260], [-160, -260], [-160, -180], [-310, -180],
+      ],
+      area: 12000,
+      elevation: 0,
+      color: '#f97316',
+      isVacant: true,
+    },
+    {
+      id: 'EP003',
+      name: 'Vacant Plot — North-East Corner',
+      description: 'Available plot north-east of Biosciences, ideal for research facility',
+      footprint: [
+        [130, 155], [270, 155], [270, 230], [130, 230],
+      ],
+      area: 10500,
+      elevation: 0,
+      color: '#14b8a6',
+      isVacant: true,
+    },
   ],
 
   buildings: [
